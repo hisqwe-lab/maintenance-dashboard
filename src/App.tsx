@@ -6,12 +6,14 @@ import {
 import { 
   Search, Filter, Calendar, Building2, Wrench, AlertTriangle, 
   TrendingUp, DollarSign, List, Download, RefreshCcw, FileWarning, 
-  CheckCircle2, FileText, ShoppingCart, Activity, ArrowUpRight, ArrowDownRight
+  CheckCircle2, FileText, ShoppingCart, Activity, ArrowUpRight, ArrowDownRight,
+  ArrowUpDown
 } from 'lucide-react';
 
 const App = () => {
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);
+  const [sortBy, setSortBy] = useState('date-desc'); // date-desc, date-asc, price-desc, price-asc
   const [filters, setFilters] = useState({
     building: '전체',
     category: '전체',
@@ -20,6 +22,9 @@ const App = () => {
     vendor: '전체',
     searchTerm: ''
   });
+
+  // 유틸리티: 가격 파싱
+  const parsePrice = (val) => parseInt(String(val || '0').replace(/[^0-9]/g, '')) || 0;
 
   // 데이터 업로드 및 전처리
   const handleFileUpload = (e) => {
@@ -63,9 +68,9 @@ const App = () => {
     reader.readAsText(file, "EUC-KR"); 
   };
 
-  // 전문가 분석을 위한 필터링 데이터
+  // 필터링 및 정렬된 데이터
   const filteredData = useMemo(() => {
-    return data.filter(item => {
+    let result = data.filter(item => {
       return (filters.building === '전체' || item['건물동'] === filters.building) &&
              (filters.category === '전체' || item['구분'] === filters.category) &&
              (filters.facility === '전체' || item['설비명'] === filters.facility) &&
@@ -74,11 +79,19 @@ const App = () => {
              (filters.searchTerm === '' || 
               JSON.stringify(item).toLowerCase().includes(filters.searchTerm.toLowerCase()));
     });
-  }, [data, filters]);
+
+    // 정렬 로직 적용
+    return result.sort((a, b) => {
+      if (sortBy === 'date-desc') return String(b['날짜']).localeCompare(String(a['날짜']));
+      if (sortBy === 'date-asc') return String(a['날짜']).localeCompare(String(b['날짜']));
+      if (sortBy === 'price-desc') return parsePrice(b['금액(원)']) - parsePrice(a['금액(원)']);
+      if (sortBy === 'price-asc') return parsePrice(a['금액(원)']) - parsePrice(b['금액(원)']);
+      return 0;
+    });
+  }, [data, filters, sortBy]);
 
   // 전문가급 분석 통계
   const analysis = useMemo(() => {
-    const parsePrice = (val) => parseInt(String(val || '0').replace(/[^0-9]/g, '')) || 0;
     const totalCost = filteredData.reduce((acc, curr) => acc + parsePrice(curr['금액(원)']), 0);
     const count = filteredData.length;
 
@@ -147,7 +160,7 @@ const App = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 p-10 text-slate-900">
+    <div className="min-h-screen bg-[#f8fafc] p-6 lg:p-10 font-sans text-slate-900">
       {/* Header Section */}
       <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10">
         <div className="flex items-center gap-5">
@@ -156,7 +169,7 @@ const App = () => {
           </div>
           <div>
             <h1 className="text-2xl font-black tracking-tight flex items-center gap-2">
-              유지보수 분석 전문가 대시보드
+              26년 시설유지보수 분석 대시보드
             </h1>
             <div className="flex items-center gap-3 mt-1">
               <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full border border-blue-100">
@@ -191,7 +204,7 @@ const App = () => {
           { label: '단위당 평균 비용', value: `₩${Math.round(analysis.totalCost / (analysis.count || 1)).toLocaleString()}`, icon: TrendingUp, color: 'text-amber-600', trend: '건당 평균', bg: 'bg-amber-500' },
           { label: '고비용 발생 설비', value: analysis.topFacilities[0]?.name || '-', icon: AlertTriangle, color: 'text-rose-600', trend: '주의 필요', bg: 'bg-rose-500' },
         ].map((kpi, idx) => (
-          <div key={idx} className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 border-slate-200/60 relative overflow-hidden group">
+          <div key={idx} className="bg-white p-7 rounded-[2rem] shadow-sm border border-slate-200/60 relative overflow-hidden group">
             <div className={`absolute -right-2 -top-2 w-24 h-24 ${kpi.bg} opacity-[0.03] rounded-full group-hover:scale-110 transition-transform`}></div>
             <div className="flex flex-col h-full justify-between relative z-10">
               <div className="flex items-center justify-between mb-4">
@@ -210,7 +223,7 @@ const App = () => {
       </div>
 
       {/* Advanced Filter Section */}
-      <section className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 border-slate-200/60 mb-10">
+      <section className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-200/60 mb-10">
         <div className="flex items-center gap-2 mb-8 border-b border-slate-50 pb-5">
             <Filter size={18} className="text-blue-600" />
             <h2 className="text-sm font-black text-slate-800 uppercase tracking-tight">다차원 분석 필터</h2>
@@ -226,7 +239,7 @@ const App = () => {
 
       {/* Main Analysis Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
-        <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 shadow-sm border border-slate-200/60">
+        <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-200/60">
           <div className="flex items-center justify-between mb-10">
             <h3 className="font-black text-lg flex items-center gap-2"><div className="w-1.5 h-6 bg-blue-600 rounded-full"></div> 월별 비용 트렌드</h3>
             <div className="text-[10px] text-slate-400 font-bold uppercase">Expenditure Trend</div>
@@ -285,7 +298,7 @@ const App = () => {
       </div>
 
       {/* Asset Rank Section */}
-      <div className="bg-slate-900 text-white p-8 rounded-2xl mb-10 shadow-2xl shadow-slate-200 relative overflow-hidden">
+      <div className="bg-slate-900 text-white p-10 rounded-[3rem] mb-10 shadow-2xl shadow-slate-200 relative overflow-hidden">
         <div className="absolute right-0 top-0 w-1/2 h-full bg-blue-600/10 skew-x-12 translate-x-1/2"></div>
         <div className="relative z-10">
             <h3 className="text-sm font-black text-blue-400 uppercase tracking-widest mb-8">Asset Analysis (By Expenditure)</h3>
@@ -305,14 +318,30 @@ const App = () => {
       </div>
 
       {/* Detail Record Table */}
-      <section className="bg-white rounded-2xl shadow-lg border border-slate-200 shadow-sm border border-slate-200/60 overflow-hidden">
+      <section className="bg-white rounded-[2.5rem] shadow-sm border border-slate-200/60 overflow-hidden">
         <div className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
           <div>
             <h3 className="font-black text-slate-900 flex items-center gap-2 text-lg">상세 유지보수 저널</h3>
             <p className="text-xs text-slate-400 font-bold mt-1 uppercase tracking-tighter">Detailed Maintenance Logs</p>
           </div>
-          <div className="bg-blue-600 text-white text-[11px] font-black px-4 py-2 rounded-xl shadow-lg shadow-blue-100">
-             {analysis.count} DATA POINTS
+          <div className="flex items-center gap-4">
+            {/* 정렬 선택 UI */}
+            <div className="flex items-center bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-sm">
+                <ArrowUpDown size={14} className="text-slate-400 mr-2" />
+                <select 
+                    value={sortBy} 
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="text-[11px] font-black text-slate-600 bg-transparent focus:outline-none cursor-pointer"
+                >
+                    <option value="date-desc">날짜 최신순</option>
+                    <option value="date-asc">날짜 과거순</option>
+                    <option value="price-desc">금액 높은순</option>
+                    <option value="price-asc">금액 낮은순</option>
+                </select>
+            </div>
+            <div className="bg-blue-600 text-white text-[11px] font-black px-4 py-2 rounded-xl shadow-lg shadow-blue-100">
+                {analysis.count} DATA POINTS
+            </div>
           </div>
         </div>
         <div className="overflow-x-auto custom-scrollbar">
@@ -328,7 +357,7 @@ const App = () => {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredData.slice(0, 50).map((item, i) => {
-                const price = parseInt(String(item['금액(원)'] || '0').replace(/[^0-9]/g, '')) || 0;
+                const price = parsePrice(item['금액(원)']);
                 return (
                     <tr key={i} className="hover:bg-slate-50/80 transition-all group">
                     <td className="px-8 py-6 text-slate-400 text-xs font-black align-top tabular-nums">{item['날짜']}</td>
