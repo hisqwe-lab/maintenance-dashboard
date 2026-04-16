@@ -7,7 +7,7 @@ import {
   Search, Filter, Calendar, Building2, Wrench, AlertTriangle, 
   TrendingUp, DollarSign, List, Download, RefreshCcw, FileWarning, 
   CheckCircle2, FileText, ShoppingCart, Activity, ArrowUpRight, ArrowDownRight,
-  ArrowUpDown
+  ArrowUpDown, Tag
 } from 'lucide-react';
 
 const App = () => {
@@ -80,7 +80,6 @@ const App = () => {
               JSON.stringify(item).toLowerCase().includes(filters.searchTerm.toLowerCase()));
     });
 
-    // 정렬 로직 적용
     return result.sort((a, b) => {
       if (sortBy === 'date-desc') return String(b['날짜']).localeCompare(String(a['날짜']));
       if (sortBy === 'date-asc') return String(a['날짜']).localeCompare(String(b['날짜']));
@@ -95,7 +94,6 @@ const App = () => {
     const totalCost = filteredData.reduce((acc, curr) => acc + parsePrice(curr['금액(원)']), 0);
     const count = filteredData.length;
 
-    // 월별 트렌드
     const monthlyMap = {};
     filteredData.forEach(item => {
       const month = String(item['날짜'] || '').substring(0, 7);
@@ -103,7 +101,6 @@ const App = () => {
     });
     const trend = Object.entries(monthlyMap).sort().map(([name, cost]) => ({ name, cost }));
 
-    // 건물별 배분율
     const buildingMap = {};
     filteredData.forEach(item => {
       const b = item['건물동'] || '기타';
@@ -111,7 +108,6 @@ const App = () => {
     });
     const buildingData = Object.entries(buildingMap).sort((a,b) => b[1]-a[1]).map(([name, value]) => ({ name, value }));
 
-    // 설비별 빈도/비용 (Top 5)
     const facilityStats = {};
     filteredData.forEach(item => {
       const f = item['설비명'] || '기타';
@@ -137,6 +133,17 @@ const App = () => {
   }, [data]);
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
+
+  // 구분(Category)별 배지 색상 매핑
+  const getCategoryStyle = (cat) => {
+    switch (cat) {
+      case '수선비': return 'bg-blue-50 text-blue-600 border-blue-100';
+      case '용역비': return 'bg-purple-50 text-purple-600 border-purple-100';
+      case '검사비': return 'bg-amber-50 text-amber-600 border-amber-100';
+      case '수선공사': return 'bg-rose-50 text-rose-600 border-rose-100';
+      default: return 'bg-slate-50 text-slate-600 border-slate-100';
+    }
+  };
 
   if (data.length === 0) {
     return (
@@ -169,7 +176,7 @@ const App = () => {
           </div>
           <div>
             <h1 className="text-2xl font-black tracking-tight flex items-center gap-2">
-              26년 시설유지보수 분석 대시보드
+              유지보수 분석 전문가 대시보드
             </h1>
             <div className="flex items-center gap-3 mt-1">
               <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full border border-blue-100">
@@ -222,7 +229,7 @@ const App = () => {
         ))}
       </div>
 
-      {/* Advanced Filter Section */}
+      {/* Filter Section */}
       <section className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-200/60 mb-10">
         <div className="flex items-center gap-2 mb-8 border-b border-slate-50 pb-5">
             <Filter size={18} className="text-blue-600" />
@@ -325,7 +332,6 @@ const App = () => {
             <p className="text-xs text-slate-400 font-bold mt-1 uppercase tracking-tighter">Detailed Maintenance Logs</p>
           </div>
           <div className="flex items-center gap-4">
-            {/* 정렬 선택 UI */}
             <div className="flex items-center bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-sm">
                 <ArrowUpDown size={14} className="text-slate-400 mr-2" />
                 <select 
@@ -349,6 +355,7 @@ const App = () => {
             <thead>
               <tr className="bg-slate-50/20 border-b border-slate-100 text-slate-400">
                 <th className="px-8 py-5 font-black text-[10px] uppercase tracking-widest w-28">Date</th>
+                <th className="px-6 py-5 font-black text-[10px] uppercase tracking-widest w-28">Type</th>
                 <th className="px-8 py-5 font-black text-[10px] uppercase tracking-widest w-48">Asset Info</th>
                 <th className="px-8 py-5 font-black text-[10px] uppercase tracking-widest">Description & Action</th>
                 <th className="px-8 py-5 font-black text-[10px] uppercase tracking-widest text-right w-40">Amount</th>
@@ -358,9 +365,16 @@ const App = () => {
             <tbody className="divide-y divide-slate-100">
               {filteredData.slice(0, 50).map((item, i) => {
                 const price = parsePrice(item['금액(원)']);
+                const category = item['구분'] || '기타';
                 return (
                     <tr key={i} className="hover:bg-slate-50/80 transition-all group">
                     <td className="px-8 py-6 text-slate-400 text-xs font-black align-top tabular-nums">{item['날짜']}</td>
+                    {/* 구분 배지 열 추가 */}
+                    <td className="px-6 py-6 align-top">
+                        <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg border shadow-sm inline-block whitespace-nowrap ${getCategoryStyle(category)}`}>
+                            {category}
+                        </span>
+                    </td>
                     <td className="px-8 py-6 align-top">
                         <div className="font-black text-slate-900 text-xs mb-1.5">{item['건물동']}</div>
                         <div className="text-[9px] text-blue-600 font-black uppercase tracking-tighter bg-blue-50 px-2 py-1 rounded-lg border border-blue-100 inline-block">
@@ -408,17 +422,11 @@ const App = () => {
             </div>
           )}
         </div>
-        {filteredData.length > 50 && (
-            <div className="p-8 text-center bg-slate-50/50 border-t border-slate-50">
-                <p className="text-xs font-bold text-slate-400">상위 50개의 레코드만 표시 중입니다. 전체 분석을 원하시면 필터를 조정하세요.</p>
-            </div>
-        )}
       </section>
     </div>
   );
 };
 
-// 재사용 가능한 전문가 스타일 필터 컴포넌트
 const FilterGroup = ({ label, icon: Icon, options, value, onChange }) => (
   <div className="flex flex-col gap-2.5">
     <label className="text-[10px] font-black text-slate-400 flex items-center gap-1.5 uppercase tracking-widest pl-1">
