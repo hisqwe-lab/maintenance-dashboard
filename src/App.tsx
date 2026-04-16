@@ -354,12 +354,12 @@ const App = () => {
           <table className="w-full text-left text-sm min-w-[1100px]">
             <thead>
               <tr className="bg-slate-50/20 border-b border-slate-100 text-slate-400">
-                <th className="px-8 py-5 font-black text-[10px] uppercase tracking-widest w-28">Date</th>
-                <th className="px-6 py-5 font-black text-[10px] uppercase tracking-widest w-28">Type</th>
-                <th className="px-8 py-5 font-black text-[10px] uppercase tracking-widest w-52">Asset Info</th>
-                <th className="px-8 py-5 font-black text-[10px] uppercase tracking-widest">Description & Action</th>
-                <th className="px-8 py-5 font-black text-[10px] uppercase tracking-widest text-right w-40">Amount</th>
-                <th className="px-8 py-5 font-black text-[10px] uppercase tracking-widest w-52">Reference</th>
+                <th className="px-8 py-5 font-black text-[14px] uppercase tracking-widest w-35">Date</th>
+                <th className="px-6 py-5 font-black text-[14px] uppercase tracking-widest w-28">Type</th>
+                <th className="px-8 py-5 font-black text-[14px] uppercase tracking-widest w-52">Asset Info</th>
+                <th className="px-8 py-5 font-black text-[14px] uppercase tracking-widest">Description & Action</th>
+                <th className="px-8 py-5 font-black text-[14px] uppercase tracking-widest text-right w-40">Amount</th>
+                <th className="px-8 py-5 font-black text-[14px] uppercase tracking-widest w-52">Reference</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
