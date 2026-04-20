@@ -7,7 +7,7 @@ import {
   Search, Filter, Calendar, Building2, Wrench, AlertTriangle, 
   TrendingUp, DollarSign, List, Download, RefreshCcw, FileWarning, 
   CheckCircle2, FileText, ShoppingCart, Activity, ArrowUpRight, ArrowDownRight,
-  ArrowUpDown, Tag, Split, Info
+  ArrowUpDown, Tag, Split, Info, Briefcase
 } from 'lucide-react';
 
 const App = () => {
@@ -99,6 +99,14 @@ const App = () => {
     const totalCost = filteredData.reduce((acc, curr) => acc + curr['금액(원)'], 0);
     const count = filteredData.length;
 
+    // 외주 용역 비중 계산 (용역비 + 수선공사)
+    const outsourcingCost = filteredData.reduce((acc, curr) => {
+      const cat = curr['구분'] || '';
+      if (cat.includes('용역') || cat.includes('공사')) return acc + curr['금액(원)'];
+      return acc;
+    }, 0);
+    const outsourcingRatio = totalCost > 0 ? (outsourcingCost / totalCost) * 100 : 0;
+
     const monthlyMap = {};
     const buildingMap = { '기자재동': 0, '디오밸리': 0 };
 
@@ -109,7 +117,6 @@ const App = () => {
       if (month) monthlyMap[month] = (monthlyMap[month] || 0) + price;
 
       if (item['건물동'] === '전체') {
-        // 정밀 배분 로직: 기자재동에 70%를 할당하고, 나머지를 디오밸리에 할당하여 합계 일치
         const gijajae = Math.round(price * 0.7);
         const diovalley = price - gijajae;
         buildingMap['기자재동'] += gijajae;
@@ -127,16 +134,7 @@ const App = () => {
       .sort((a,b) => b[1]-a[1])
       .map(([name, value]) => ({ name, value }));
 
-    const facilityStats = {};
-    filteredData.forEach(item => {
-      const f = item['설비명'] || '기타';
-      if (!facilityStats[f]) facilityStats[f] = { name: f, count: 0, cost: 0 };
-      facilityStats[f].count += 1;
-      facilityStats[f].cost += item['금액(원)'];
-    });
-    const topFacilities = Object.values(facilityStats).sort((a,b) => b.cost - a.cost).slice(0, 5);
-
-    return { totalCost, count, trend, buildingData, topFacilities };
+    return { totalCost, count, trend, buildingData, outsourcingRatio, outsourcingCost };
   }, [filteredData]);
 
   const options = useMemo(() => {
@@ -231,7 +229,7 @@ const App = () => {
         {[
           { label: '배분 적용 집행 총액', value: `₩${analysis.totalCost.toLocaleString()}`, icon: DollarSign, color: 'text-blue-600', trend: '총 지출액 합계', bg: 'bg-blue-600' },
           { label: '필터링 분석 건수', value: `${analysis.count.toLocaleString()}건`, icon: CheckCircle2, color: 'text-emerald-600', trend: '조건 부합', bg: 'bg-emerald-500' },
-          { label: '단위당 평균 비용', value: `₩${Math.round(analysis.totalCost / (analysis.count || 1)).toLocaleString()}`, icon: TrendingUp, color: 'text-amber-600', trend: '건당 평균', bg: 'bg-amber-500' },
+          { label: '외주 용역 비중', value: `${analysis.outsourcingRatio.toFixed(1)}%`, icon: Briefcase, color: 'text-purple-600', trend: `₩${analysis.outsourcingCost.toLocaleString()}`, bg: 'bg-purple-500' },
           { label: '비중 1위 건물', value: analysis.buildingData[0]?.name || '-', icon: Building2, color: 'text-rose-600', trend: '점유율 1위', bg: 'bg-rose-500' },
         ].map((kpi, idx) => (
           <div key={idx} className="bg-white p-7 rounded-[2rem] shadow-sm border border-slate-200/60 relative overflow-hidden group">
@@ -292,7 +290,7 @@ const App = () => {
         </div>
 
         <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-200/60">
-          <h3 className="font-black text-lg mb-10 flex items-center gap-2"><div className="w-1.5 h-6 bg-emerald-500 rounded-full"></div> 건물별 비용 점유율 (정밀 배분)</h3>
+          <h3 className="font-black text-lg mb-10 flex items-center gap-2"><div className="w-1.5 h-6 bg-emerald-500 rounded-full"></div> 건물별 비용 점유율</h3>
           <div className="h-80 flex flex-col md:flex-row items-center">
             <div className="w-full md:w-[55%] h-full">
               <ResponsiveContainer width="100%" height="100%">
