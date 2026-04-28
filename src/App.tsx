@@ -265,9 +265,9 @@ const App = () => {
       <section className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-200/60 mb-10">
         <div className="flex items-center gap-2 mb-8 border-b border-slate-50 pb-5">
             <Filter size={18} className="text-blue-600" />
-            <h2 className="text-sm font-black text-slate-800 uppercase tracking-tight">다차원 분석 필터</h2>
+            <h2 className="text-l font-black text-slate-800 uppercase tracking-tight">다차원 분석 필터</h2>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 lg:grid-cols-5 gap-8">
           <FilterGroup label="건물동 (LOCATION)" icon={Building2} options={options.buildings} value={filters.building} onChange={(v) => setFilters(p => ({...p, building: v}))} />
           <FilterGroup label="비용구분 (CATEGORY)" icon={Calendar} options={options.categories} value={filters.category} onChange={(v) => setFilters(p => ({...p, category: v}))} />
           <FilterGroup label="설비명 (ASSET)" icon={Wrench} options={options.facilities} value={filters.facility} onChange={(v) => setFilters(p => ({...p, facility: v}))} />
