@@ -136,13 +136,13 @@ const App = () => {
       .sort((a, b) => b[1] - a[1])
       .map(([name, value]) => ({ name, value }));
 
-    const outsourcingCost = filteredData.reduce((acc, curr) => {
+    const serviceCost = filteredData.reduce((acc, curr) => {
       const cat = curr['구분'] || '';
-      return (cat.includes('용역') || cat.includes('공사')) ? acc + curr['금액(원)'] : acc;
+      return (cat === '용역비') ? acc + curr['금액(원)'] : acc;
     }, 0);
-    const outsourcingRatio = totalCost > 0 ? (outsourcingCost / totalCost) * 100 : 0;
+    const serviceRatio = totalCost > 0 ? (serviceCost / totalCost) * 100 : 0;
 
-    return { totalCost, count, avgCost, trend, buildingData, outsourcingRatio, outsourcingCost };
+    return { totalCost, count, avgCost, trend, buildingData, serviceRatio, serviceCost };
   }, [filteredData]);
 
   const options = useMemo(() => {
@@ -257,7 +257,7 @@ const App = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
         <KPICard label="배분 적용 집행 총액" value={`₩${analysis.totalCost.toLocaleString()}`} icon={DollarSign} color="text-blue-600" trend="총 지출액 합계" bg="bg-blue-600" />
         <KPICard label="필터링 분석 건수" value={`${analysis.count.toLocaleString()}건`} icon={CheckCircle2} color="text-emerald-600" trend="조건 부합" bg="bg-emerald-500" />
-        <KPICard label="단위당 평균 비용" value={`₩${analysis.avgCost.toLocaleString()}`} icon={TrendingUp} color="text-amber-600" trend="건당 평균" bg="bg-amber-500" highlight />
+        <KPICard label="용역비 비중" value={`${analysis.serviceRatio.toFixed(1)}%`} icon={Briefcase} color="text-amber-600" trend={`₩${analysis.serviceCost.toLocaleString()}`} bg="bg-amber-500" highlight />
         <KPICard label="비중 1위 건물" value={analysis.buildingData[0]?.name || '-'} icon={Building2} color="text-rose-600" trend="점유율 1위" bg="bg-rose-500" />
       </div>
 
@@ -265,9 +265,9 @@ const App = () => {
       <section className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-200/60 mb-10">
         <div className="flex items-center gap-2 mb-8 border-b border-slate-50 pb-5">
             <Filter size={18} className="text-blue-600" />
-            <h2 className="text-l font-black text-slate-800 uppercase tracking-tight">다차원 분석 필터</h2>
+            <h2 className="text-sm font-black text-slate-800 uppercase tracking-tight">다차원 분석 필터</h2>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 lg:grid-cols-5 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
           <FilterGroup label="건물동 (LOCATION)" icon={Building2} options={options.buildings} value={filters.building} onChange={(v) => setFilters(p => ({...p, building: v}))} />
           <FilterGroup label="비용구분 (CATEGORY)" icon={Calendar} options={options.categories} value={filters.category} onChange={(v) => setFilters(p => ({...p, category: v}))} />
           <FilterGroup label="설비명 (ASSET)" icon={Wrench} options={options.facilities} value={filters.facility} onChange={(v) => setFilters(p => ({...p, facility: v}))} />
@@ -288,7 +288,8 @@ const App = () => {
                 <defs>
                   <linearGradient id="colorCost" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                    <stop offset="95%" stopColor="#3b82f6" st
+                    opOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -336,7 +337,7 @@ const App = () => {
         </div>
       </div>
 
-      {/* 상세 유지보수 저널 - 스크린샷 기반 고도화 */}
+      {/* 상세 유지보수 저널 */}
       <section className="bg-white rounded-[2.5rem] shadow-sm border border-slate-200/60 overflow-hidden">
         <div className="px-10 py-8 border-b border-slate-50 flex items-center justify-between">
           <div>
@@ -379,7 +380,7 @@ const App = () => {
                       <td className="pl-10 pr-6 py-8 align-top">
                         <span className="text-slate-400 text-l font-black tabular-nums tracking-tighter">{item['날짜']}</span>
                       </td>
-                      <td className="px-10 py-8 align-top">
+                      <td className="px-6 py-8 align-top">
                         <span className={`text-[15px] font-black px-2.5 py-1 rounded-lg border shadow-sm inline-block ${getCategoryStyle(category)}`}>
                             {category}
                         </span>
@@ -405,7 +406,7 @@ const App = () => {
                               <div className="w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center shrink-0">
                                 <Info size={10} className="text-white" />
                               </div>
-                              <span className="text-[12px] text-blue-600 font-black">"전체" 항목은 기자재동 70%, 디오밸리 30% 로 배분 되었습니다</span>
+                              <span className="text-[10px] text-blue-600 font-black">"전체" 항목은 기자재동 70%, 디오밸리 30% 로 배분 되었습니다</span>
                             </div>
                           )}
                       </td>
@@ -418,7 +419,7 @@ const App = () => {
                           <div className="bg-white border border-slate-200 rounded-xl px-4 py-2.5 flex items-center justify-between shadow-sm hover:border-blue-300 transition-colors cursor-pointer group/ref">
                             <div className="flex items-center gap-2 overflow-hidden">
                               <ShoppingCart size={13} className="text-amber-500 shrink-0" />
-                              <span className="text-[13px] font-black text-slate-600 truncate">{item['지출품의서'] || '공급업체'}</span>
+                              <span className="text-[11px] font-black text-slate-600 truncate">{item['지출품의서'] || '공급업체'}</span>
                             </div>
                             <ChevronRight size={14} className="text-slate-300 group-hover/ref:text-blue-500 transition-colors" />
                           </div>
@@ -448,7 +449,7 @@ const KPICard = ({ label, value, icon: Icon, color, trend, bg, highlight }) => (
       <div>
         <p className="text-3xl font-black tracking-tighter text-slate-900 mb-2">{value}</p>
         <p className={`text-[11px] font-black ${highlight ? 'text-amber-600' : color} flex items-center gap-1.5`}>
-           {highlight && <TrendingUp size={12} />} {trend}
+           {highlight && <Briefcase size={12} />} {trend}
         </p>
       </div>
     </div>
